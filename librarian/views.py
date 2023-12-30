@@ -42,8 +42,8 @@ class LibrarianLoginView(APIView):
         
 class StudentResistrationView(APIView):
     authentication_classes = [TokenAuthentication]
-    authenticate = [IsAuthenticated]
-    
+    permission_classes = [IsAuthenticated]
+
     def post(self, request):
         name = request.data.get('name')
         email = request.data.get("email")
