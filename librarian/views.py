@@ -7,7 +7,8 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.authtoken.models import Token
-from student.serializers import StudentSerializer
+from student.serializers import Student, StudentSerializer
+from .serializeres import Book, BookSerializer
 
 # Create your views here.
 class LibrarianLoginView(APIView):
@@ -65,4 +66,68 @@ class StudentResistrationView(APIView):
             return Response({
                 "success": False,
                 "message": "Name, Email and Password are required"
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+class BookView(APIView):
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, pk=None):
+        if pk:
+            book = Book.objects.filter(pk=pk).first()
+            if book:
+                serializer = BookSerializer(instance=book)
+                return Response({
+                    "success": True,
+                    "message": "Book details",
+                    "data": serializer.data
+                }, status=status.HTTP_200_OK)
+            else:
+                return Response({
+                    "success": False,
+                    "message": "Book not found",
+                    "data": None,
+                }, status=status.HTTP_404_NOT_FOUND)
+        else:
+            books = Book.objects.all()
+            serializer = BookSerializer(instance=books, many=True)
+            return Response({
+                "success": True,
+                "message": "Book details",
+                "data": serializer.data
+            }, status=status.HTTP_200_OK)
+
+    def post(self, request):
+        serializer = BookSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({
+                "success": True,
+                "message": "Book added successfully",
+                "data": serializer.data
+            }, status=status.HTTP_201_CREATED)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    def delete(self, request, pk=None):
+        if pk:
+            book = Book.objects.filter(pk=pk).first()
+            if book:
+                book.delete()
+                return Response({
+                    "success": True,
+                    "message": "Book deleted successfully",
+                    "data": None
+                }, status=status.HTTP_200_OK)
+            else:
+                return Response({
+                    "success": False,
+                    "message": "Book not found",
+                    "data": None
+                }, status=status.HTTP_404_NOT_FOUND)
+        else:
+            return Response({
+                "success": False,
+                "message": "PK is required",
+                "data": None
             }, status=status.HTTP_400_BAD_REQUEST)
