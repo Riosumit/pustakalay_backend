@@ -41,9 +41,34 @@ class LibrarianLoginView(APIView):
                 "message": "Email and Password is required"
             }, status=status.HTTP_400_BAD_REQUEST)
         
-class StudentResistrationView(APIView):
+class StudentView(APIView):
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
+
+    def get(self, request, pk=None):
+        if pk:
+            student = Student.objects.filter(pk=pk).first()
+            if student:
+                serializer = StudentSerializer(instance=student)
+                return Response({
+                    "success": True,
+                    "message": "Student details",
+                    "data": serializer.data
+                }, status=status.HTTP_200_OK)
+            else:
+                return Response({
+                    "success": False,
+                    "message": "Student not found",
+                    "data": None,
+                }, status=status.HTTP_404_NOT_FOUND)
+        else:
+            students = Student.objects.all()
+            serializer = StudentSerializer(instance=students, many=True)
+            return Response({
+                "success": True,
+                "message": "Student List",
+                "data": serializer.data
+            }, status=status.HTTP_200_OK)
 
     def post(self, request):
         name = request.data.get('name')
@@ -66,6 +91,29 @@ class StudentResistrationView(APIView):
             return Response({
                 "success": False,
                 "message": "Name, Email and Password are required"
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, pk=None):
+        if pk:
+            student = Student.objects.filter(pk=pk).first()
+            if student:
+                student.user.delete()
+                return Response({
+                    "success": True,
+                    "message": "Student deleted successfully",
+                    "data": None
+                }, status=status.HTTP_200_OK)
+            else:
+                return Response({
+                    "success": False,
+                    "message": "Student not found",
+                    "data": None
+                }, status=status.HTTP_404_NOT_FOUND)
+        else:
+            return Response({
+                "success": False,
+                "message": "PK is required",
+                "data": None
             }, status=status.HTTP_400_BAD_REQUEST)
         
 class BookView(APIView):
@@ -93,7 +141,7 @@ class BookView(APIView):
             serializer = BookSerializer(instance=books, many=True)
             return Response({
                 "success": True,
-                "message": "Book details",
+                "message": "Book List",
                 "data": serializer.data
             }, status=status.HTTP_200_OK)
 
